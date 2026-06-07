@@ -26,7 +26,7 @@ _DOC_TYPE_HINTS = [
     (r"\bnda\b|non-disclosure", "NDA"),
     (r"\bdpa\b|data processing", "DPA"),
     (r"\bsla\b|uptime|service level|availability", "SLA"),
-    (r"vendor services? agreement|master .*agreement|\bmsa\b|services agreement", "MSA"),
+    (r"vendor services? agreement|master .*agreement|\bmsa\b|services agreement", "Vendor"),
 ]
 
 _DRAFTING_RE = re.compile(
@@ -73,7 +73,10 @@ class Planner:
             intent = "summary"
         elif any(w in q for w in ("conflict", "across", "all agreements", "which agreement")):
             intent = "cross_doc_compare"
-        elif any(w in q for w in ("risk", "unlimited", "financial", "exposure")):
+        elif (any(w in q for w in ("risk", "unlimited", "financial", "exposure"))
+              or ("liabilit" in q and ("data breach" in q or "data breaches" in q))):
+            # liability-for-data-breach is a risk-analysis question (Q7), not a plain
+            # yes/no interpretation like Q5 (liability vs confidentiality).
             intent = "risk_analysis"
         elif q.startswith("what happens if") or "what remedies" in q or "if " in q and "beyond" in q:
             intent = "conditional"

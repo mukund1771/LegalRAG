@@ -21,7 +21,7 @@ from legal_rag.ingestion.indexer import build_index
 from legal_rag.llm.embeddings import FakeEmbedder
 from legal_rag.models import Evidence
 
-CONTRACTS_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "contracts")
+CONTRACTS_DIR = os.path.join(os.path.dirname(__file__), "fixtures", "contracts")
 
 
 @pytest.fixture(scope="module")

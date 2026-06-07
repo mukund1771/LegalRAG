@@ -68,7 +68,7 @@ def _find_governing_law(doc: ParsedDoc) -> str:
     for section in doc.sections:
         if any(c.clause_type == "governing_law" for c in section.clauses) or \
                 "governing law" in section.heading.lower():
-            m = re.search(r"laws of the State of ([A-Z][a-z]+)", section.text)
+            m = re.search(r"laws of (?:the )?(.+?)\s*(?:[,.(]|$)", section.text, re.I)
             if m:
-                return m.group(1)
+                return re.sub(r"^State of\s+", "", m.group(1).strip())
     return "—"

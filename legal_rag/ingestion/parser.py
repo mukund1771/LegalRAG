@@ -36,6 +36,9 @@ def _read_text(path: str) -> str:
 def _normalize(text: str) -> str:
     """Light normalization that preserves character offsets meaningfully."""
     text = text.replace("\r\n", "\n").replace("\r", "\n")
+    # normalize smart quotes so downstream regexes (parties, etc.) match (len-preserving)
+    text = (text.replace("\u201c", '"').replace("\u201d", '"')
+                .replace("\u2018", "'").replace("\u2019", "'"))
     # collapse 3+ blank lines to a single blank line
     text = re.sub(r"\n{3,}", "\n\n", text)
     return text.strip() + "\n"

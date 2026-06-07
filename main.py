@@ -67,7 +67,14 @@ def main() -> None:
     parser.add_argument("--ingest", action="store_true", help="build the index")
     parser.add_argument("--search", metavar="QUERY", default=None,
                         help="retrieve evidence for a query (Milestone 2)")
-    parser.add_argument("--eval", action="store_true", help="run evaluation")
+    parser.add_argument("--eval", action="store_true", help="run system evaluation")
+    parser.add_argument("--retrieval-eval", action="store_true",
+                        help="retrieval metrics (recall@k/MRR/nDCG) vs qrels")
+    parser.add_argument("--ablation", action="store_true",
+                        help="compare embedder/reranker configs on retrieval metrics")
+    parser.add_argument("--serve", action="store_true", help="run the FastAPI web app")
+    parser.add_argument("--host", default="0.0.0.0")
+    parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--backend", default=None,
                         help="embedding backend override: ollama | sentence_transformers | fake")
     parser.add_argument("--reranker", default=None,
@@ -91,6 +98,27 @@ def main() -> None:
             settings.retrieval.reranker_backend = args.reranker
         orchestrator = build_system(settings)
         print(format_report(run_eval(orchestrator)))
+    elif args.retrieval_eval:
+        from legal_rag.agents.planner import Planner
+        from legal_rag.agents.retriever import Retriever
+        from legal_rag.eval.retrieval_eval import evaluate_retrieval, format_retrieval_report
+        from legal_rag.llm.embeddings import get_embedder
+        from legal_rag.retrieval.rerank import get_reranker
+        from legal_rag.retrieval.store import VectorStore
+        if args.backend:
+            settings.embedding.backend = args.backend
+        if args.reranker:
+            settings.retrieval.reranker_backend = args.reranker
+        store = VectorStore.load(str(settings.index_dir))
+        retriever = Retriever(store, get_embedder(settings), get_reranker(settings), settings)
+        planner = Planner(None, settings)
+        print(format_retrieval_report(evaluate_retrieval(retriever, planner)))
+    elif args.ablation:
+        from legal_rag.eval.ablation import format_ablation, run_ablation
+        print(format_ablation(run_ablation(str(settings.data_dir))))
+    elif args.serve:
+        import uvicorn
+        uvicorn.run("legal_rag.web.app:app", host=args.host, port=args.port)
     else:
         from legal_rag.cli.console import repl
         if args.backend:

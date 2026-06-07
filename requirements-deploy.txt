@@ -1,0 +1,4 @@
+# Extra deps for the deployed config (cross-encoder reranker). Installed in the
+# Docker image; not needed for the offline/lexical local path.
+sentence-transformers>=3.0
+torch>=2.2

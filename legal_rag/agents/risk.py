@@ -6,7 +6,18 @@ from legal_rag.models import Evidence
 
 DEFAULT_PARTY = "Acme Corp"
 
-_STATE_RE = re.compile(r"laws of the State of ([A-Z][a-z]+)")
+# Jurisdiction after "laws of ...": handles "the State of California", "England and
+# Wales", "the European Union (GDPR)", etc.
+_JURIS_RE = re.compile(r"laws of (?:the )?(.+?)\s*(?:[,.(]|$)", re.IGNORECASE)
+
+
+def _jurisdiction(text: str) -> str | None:
+    m = _JURIS_RE.search(text)
+    if not m:
+        return None
+    juris = m.group(1).strip()
+    juris = re.sub(r"^(State of|Commonwealth of)\s+", "", juris, flags=re.IGNORECASE)
+    return juris or None
 
 
 def _flag(risk_type: str, severity: str, ev: Evidence, rationale: str,
@@ -44,9 +55,13 @@ class RiskAssessor:
         text = ev.context_text.lower()
         out: list[dict] = []
 
-        if re.search(r"\buncapped\b|\bunlimited\b", text) and "liab" in text:
+        if "liab" in text and (
+                re.search(r"\buncapped\b|\bunlimited\b", text)
+                or re.search(r"no (explicit )?limitation of liability", text)
+                or re.search(r"except for .{0,80}(indemnif|gross negligence)", text)):
             out.append(_flag("uncapped_liability", "high", ev,
-                             "Liability is expressly uncapped for certain breaches."))
+                             "Liability is uncapped / unlimited for certain breaches "
+                             "(no cap, or carve-outs excluded from the cap)."))
 
         if ("liab" in text and ("cap" in text or "limitation" in text)
                 and re.search(r"(not apply|shall not apply).{0,80}confidential"
@@ -85,9 +100,9 @@ class RiskAssessor:
         cites: dict[str, str] = {}
         for ev in evidence:
             if ev.clause_type == "governing_law":
-                m = _STATE_RE.search(ev.context_text)
-                if m:
-                    laws[ev.doc_id] = m.group(1)
+                juris = _jurisdiction(ev.context_text)
+                if juris:
+                    laws[ev.doc_id] = juris
                     cites[ev.doc_id] = ev.citation
 
         distinct = set(laws.values())

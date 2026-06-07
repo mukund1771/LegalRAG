@@ -1,0 +1,8 @@
+.git
+.venv
+venv
+data/index
+__pycache__
+*.pyc
+tests
+docs/*.svg

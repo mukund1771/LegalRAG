@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LegalRAG — Contract Q&amp;A</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --panel:#ffffff; --ink:#1d2330; --muted:#6b7280; --line:#e5e7eb;
+    --accent:#3c34a8; --accent-soft:#eeedfe; --user:#eef2ff;
+    --high:#d4537e; --med:#d85a30; --low:#888780;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+       background:var(--bg);color:var(--ink);height:100vh;display:flex;flex-direction:column}
+  header{padding:14px 20px;background:var(--panel);border-bottom:1px solid var(--line);
+         display:flex;align-items:baseline;gap:12px}
+  header h1{font-size:17px;margin:0}
+  header .sub{font-size:12px;color:var(--muted)}
+  header .info{margin-left:auto;font-size:11px;color:var(--muted)}
+  #log{flex:1;overflow-y:auto;padding:20px;max-width:860px;width:100%;margin:0 auto}
+  .turn{margin-bottom:18px}
+  .bubble{padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--panel)}
+  .user .bubble{background:var(--user);border-color:#dbe1f7;max-width:80%;margin-left:auto}
+  .who{font-size:11px;color:var(--muted);margin:0 4px 4px;text-transform:uppercase;letter-spacing:.04em}
+  .user .who{text-align:right}
+  .answer{white-space:pre-wrap;line-height:1.5}
+  .badges{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+  .badge{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--accent-soft);
+         color:var(--accent);border:1px solid #d9d6f5}
+  .badge.warn{background:#fbeae0;color:#993c1d;border-color:#f3cdbf}
+  .cites{margin-top:10px}
+  .cites h4,.risks h4{margin:0 0 4px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .cite{font-size:12.5px;color:#374151;padding:2px 0}
+  .risks{margin-top:10px}
+  .risk{font-size:12.5px;padding:6px 8px;border-radius:8px;border:1px solid var(--line);margin:4px 0;background:#fbfbfa}
+  .sev{display:inline-block;font-weight:700;font-size:10px;padding:1px 6px;border-radius:4px;color:#fff;margin-right:6px;text-transform:uppercase}
+  .sev.high{background:var(--high)} .sev.medium{background:var(--med)} .sev.low{background:var(--low)}
+  .rationale{color:#4b5563;margin-top:2px}
+  form{display:flex;gap:10px;padding:14px 20px;background:var(--panel);border-top:1px solid var(--line);
+       max-width:860px;width:100%;margin:0 auto}
+  input{flex:1;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:14px}
+  button{padding:11px 18px;border:0;border-radius:10px;background:var(--accent);color:#fff;font-size:14px;cursor:pointer}
+  button:disabled{opacity:.5;cursor:default}
+  .hint{max-width:860px;margin:0 auto;padding:0 20px 6px;font-size:12px;color:var(--muted)}
+  .disclaimer{font-size:11px;color:var(--muted);margin-top:6px}
+</style>
+</head>
+<body>
+  <header>
+    <h1>LegalRAG</h1>
+    <span class="sub">grounded contract Q&amp;A with citations &amp; risk flags</span>
+    <span class="info" id="info"></span>
+  </header>
+
+  <div id="log">
+    <div class="turn assistant">
+      <div class="who">assistant</div>
+      <div class="bubble">
+        <div class="answer">Ask a question about the contracts — e.g. “What is the notice period for terminating the NDA?”, “Are there conflicting governing laws across agreements?”, or “Summarize all risks for Acme.”</div>
+        <div class="disclaimer">Decision-support only — not legal advice.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hint" id="hint"></div>
+  <form id="f">
+    <input id="q" autocomplete="off" placeholder="Ask about the contracts…" />
+    <button id="send" type="submit">Ask</button>
+  </form>
+
+<script>
+const SESSION = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()));
+const log = document.getElementById('log');
+const form = document.getElementById('f');
+const input = document.getElementById('q');
+const sendBtn = document.getElementById('send');
+
+fetch('/info').then(r => r.json()).then(d => {
+  if (d && !d.error) document.getElementById('info').textContent =
+    `${d.embedder} · ${d.reranker} · ${d.llm}`;
+}).catch(()=>{});
+
+function el(cls, html){ const d=document.createElement('div'); d.className=cls; if(html!=null) d.innerHTML=html; return d; }
+function esc(s){ return (s||'').replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+function addUser(text){
+  const t = el('turn user'); t.appendChild(el('who','you'));
+  const b = el('bubble'); b.appendChild(el('answer', esc(text))); t.appendChild(b);
+  log.appendChild(t); log.scrollTop = log.scrollHeight;
+}
+
+function addAssistant(data){
+  const t = el('turn assistant'); t.appendChild(el('who','assistant'));
+  const b = el('bubble');
+  b.appendChild(el('answer', esc(data.answer)));
+
+  const badges = el('badges');
+  if (data.intent) badges.appendChild(el('badge', esc(data.intent)));
+  if (data.refused) badges.appendChild(el('badge warn','refused (out of scope)'));
+  if (data.abstained) badges.appendChild(el('badge warn','no grounded answer'));
+  if (badges.children.length) b.appendChild(badges);
+
+  if (data.citations && data.citations.length){
+    const c = el('cites'); c.appendChild(el('h4','Referenced clauses'));
+    data.citations.forEach(x => c.appendChild(el('cite', esc(x))));
+    b.appendChild(c);
+  }
+  if (data.risk_flags && data.risk_flags.length){
+    const r = el('risks'); r.appendChild(el('h4','Risk flags'));
+    data.risk_flags.forEach(f => {
+      const item = el('risk');
+      item.innerHTML = `<span class="sev ${esc(f.severity)}">${esc(f.severity)}</span>`
+        + `<b>${esc(f.risk_type)}</b> <span style="color:#6b7280">${esc(f.citation)}</span>`
+        + `<div class="rationale">${esc(f.rationale)}</div>`;
+      r.appendChild(item);
+    });
+    b.appendChild(r);
+  }
+  t.appendChild(b); log.appendChild(t); log.scrollTop = log.scrollHeight;
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const q = input.value.trim(); if (!q) return;
+  addUser(q); input.value=''; sendBtn.disabled=true;
+  document.getElementById('hint').textContent = 'thinking…';
+  try{
+    const res = await fetch('/ask', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({query:q, session_id:SESSION})});
+    const data = await res.json();
+    if (data.error){ addAssistant({answer:'Error: '+data.error, citations:[], risk_flags:[]}); }
+    else addAssistant(data);
+  }catch(err){ addAssistant({answer:'Request failed: '+err, citations:[], risk_flags:[]}); }
+  finally{ sendBtn.disabled=false; document.getElementById('hint').textContent=''; input.focus(); }
+});
+</script>
+</body>
+</html>

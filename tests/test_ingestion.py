@@ -25,7 +25,7 @@ from legal_rag.ingestion.parser import parse_document
 from legal_rag.llm.embeddings import FakeEmbedder
 from legal_rag.retrieval.store import VectorStore
 
-CONTRACTS_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "contracts")
+CONTRACTS_DIR = os.path.join(os.path.dirname(__file__), "fixtures", "contracts")
 
 
 @pytest.fixture(scope="module")
@@ -40,7 +40,7 @@ def test_corpus_discovered():
 
 def test_doc_types_detected(docs):
     types = {d.doc_type for d in docs}
-    assert {"NDA", "MSA", "SLA", "DPA"}.issubset(types)
+    assert {"NDA", "Vendor", "SLA", "DPA"}.issubset(types)
 
 
 def test_sections_and_parties(docs):
@@ -73,18 +73,17 @@ def test_clause_taxonomy_present(docs):
 
 
 def test_governing_law_conflict(docs):
-    """Q9: NDA (Delaware) vs MSA/DPA (California) — the conflict must be visible."""
+    """Q9: NDA (California) vs Vendor (England & Wales) vs DPA (EU) — conflict visible."""
+    import re
     laws = {}
     for d in docs:
         for s in d.sections:
             if "governing law" in s.heading.lower():
-                import re
-                m = re.search(r"State of ([A-Z][a-z]+)", s.text)
+                m = re.search(r"laws of (?:the )?(.+?)\s*(?:[,.(]|$)", s.text, re.I)
                 if m:
-                    laws[d.doc_type] = m.group(1)
-    assert laws.get("NDA") == "Delaware"
-    assert laws.get("MSA") == "California"
-    assert laws["NDA"] != laws["MSA"]
+                    laws[d.doc_type] = re.sub(r"^State of\s+", "", m.group(1).strip())
+    assert "California" in laws.get("NDA", "")
+    assert len(set(laws.values())) >= 2  # conflicting jurisdictions across agreements
 
 
 def test_parent_child_chunks(docs):

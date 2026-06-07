@@ -133,6 +133,28 @@ semantic + exact response caching; observability + online RAGAS + drift monitori
 multi-tenant **RBAC / entitlement filtering** (10k docs implies many matters/clients);
 and human-in-the-loop review for high-severity risk flags.
 
+## Web app
+
+A FastAPI chat UI wraps the orchestrator (answer + citations + risk flags, multi-turn):
+
+```bash
+python main.py --ingest --backend ollama     # build the index once
+python main.py --serve                        # http://localhost:8000  (chat UI + /ask API + /docs)
+```
+
+`POST /ask {query, session_id}` returns `{answer, citations, risk_flags, intent, abstained, refused}`.
+Config via env: `LEGALRAG_BACKEND` (ollama|fake), `LEGALRAG_RERANKER` (cross_encoder|lexical), `LEGALRAG_INDEX_DIR`.
+
+## Deployment (RunPod GPU)
+
+A single Docker image bundles Ollama (bge-m3 + qwen2.5) + the cross-encoder + the web app
+on port 8000. See **[docs/DEPLOY_RUNPOD.md](./docs/DEPLOY_RUNPOD.md)**. Quick build:
+
+```bash
+docker build -t <user>/legalrag:latest . && docker push <user>/legalrag:latest
+# RunPod: custom container, expose HTTP 8000, mount a volume at /root/.ollama
+```
+
 ## Known limitations
 
 No licensed-attorney validation — output is decision-support, **not legal advice**.

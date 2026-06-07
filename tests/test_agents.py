@@ -21,7 +21,7 @@ from legal_rag.llm.embeddings import FakeEmbedder
 from legal_rag.memory.session import SessionMemory
 from legal_rag.models import Evidence
 
-CONTRACTS_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "contracts")
+CONTRACTS_DIR = os.path.join(os.path.dirname(__file__), "fixtures", "contracts")
 
 
 def _offline_settings(index_dir: str):
@@ -108,7 +108,7 @@ def test_orchestrator_factual_answer_with_citation(settings):
     r = orch.handle_turn("What is the notice period for terminating the NDA?")
     assert not r.refused and not r.answer.abstained
     assert r.answer.citations
-    assert any("NDA" in c for c in r.answer.citations)
+    assert any("nda" in c.lower() for c in r.answer.citations)
 
 
 def test_orchestrator_refuses_out_of_scope(settings):
@@ -131,3 +131,32 @@ def test_orchestrator_multiturn_followup(settings):
     r2 = orch.handle_turn("Do confidentiality obligations survive it?")
     # follow-up still resolves to a grounded NDA answer (coreference handled)
     assert not r2.answer.abstained
+
+
+# ----------------------------------------------------------------- regression fixes
+
+def test_planner_liability_data_breach_routes_to_risk():
+    """Q7: 'Is X's liability capped for data breaches?' -> risk_analysis (not interp)."""
+    p = Planner(None, load_settings())
+    q7 = p.plan("Is Vendor XYZ's liability capped for data breaches?")
+    assert q7["intent"] == "risk_analysis" and q7["needs_risk_agent"]
+    # Q5 (confidentiality, not data breach) stays interpretation
+    q5 = p.plan("Is liability capped for breach of confidentiality?")
+    assert q5["intent"] == "interpretation"
+
+
+def test_verifier_grade_rescues_confident_reranker_score():
+    """Zero lexical overlap but a confident reranker score => 'correct' (not abstain)."""
+    from legal_rag.agents.verifier import Verifier
+    ev_relevant = [Evidence(
+        chunk_id="c", doc_id="DPA", doc_type="DPA", section_no="4",
+        section_heading="Subprocessors", clause_type="subprocessor",
+        child_text="Processor may engage subprocessors with prior written authorization.",
+        context_text="...", citation="[DPA §4 Subprocessors]",
+        char_start=0, char_end=1, score=5.0)]   # high cross-encoder-style score
+    v = Verifier(None, load_settings())
+    # query shares no content tokens with the clause, but score is confident
+    assert v.grade_retrieval("can they use subcontractors", ev_relevant) == "correct"
+    # same clause but zero score (lexical, no overlap) => incorrect
+    ev_relevant[0].score = 0.0
+    assert v.grade_retrieval("xyzzy floopdoodle quux", ev_relevant) == "incorrect"

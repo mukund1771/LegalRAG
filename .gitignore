@@ -220,3 +220,6 @@ __marimo__/
 # LegalRAG build artifacts
 data/index/
 .venv/
+
+# macOS
+.DS_Store

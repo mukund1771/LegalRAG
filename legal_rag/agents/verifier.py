@@ -20,6 +20,9 @@ class Verifier:
         self.llm = llm
         self.mode = getattr(settings.llm, "verifier_mode", "heuristic") if settings else "heuristic"
         self.min_groundedness = 0.18
+        # a confident reranker score (e.g. cross-encoder) counts as relevant
+        # even when the clause shares few tokens with the query
+        self.min_rerank_relevance = 0.0
 
     def grade_retrieval(self, query: str, evidence: list[Evidence]) -> str:
         """Return 'correct' | 'ambiguous' | 'incorrect'."""
@@ -30,9 +33,16 @@ class Verifier:
             return "correct"
         top = _content(evidence[0].child_text + " " + evidence[0].section_heading)
         coverage = len(q & top) / len(q)
-        if coverage == 0:
-            return "incorrect"   # top evidence shares nothing with the query
-        return "correct"
+        if coverage > 0:
+            return "correct"
+        # Zero lexical overlap, but a confident reranker (cross-encoder) still indicates
+        # relevance -> don't falsely abstain on dense / paraphrase matches (e.g. Q13
+        # "subcontractors" vs the "subprocessor" clause). For the lexical reranker this
+        # branch is inert (its score is ~0 when overlap is 0), so offline behaviour is
+        # unchanged and adversarial no-answer queries still abstain.
+        if evidence[0].score > self.min_rerank_relevance:
+            return "correct"
+        return "incorrect"
 
     def check_faithfulness(self, answer: Answer, evidence: list[Evidence]) -> dict:
         """Return {'verdict': 'pass'|'abstain', 'groundedness': float}."""
