@@ -167,6 +167,9 @@ def test_planner_and_orchestrator_chitchat(settings):
     p = Planner(None, load_settings())
     assert p.plan("hello there")["intent"] == "chitchat"
     assert p.plan("hi")["intent"] == "chitchat"
+    assert p.plan("hiiiii")["intent"] == "chitchat"      # elongated
+    assert p.plan("heyyy there")["intent"] == "chitchat"
+    assert p.plan("thanksss")["intent"] == "chitchat"
     assert p.plan("what can you do")["intent"] == "chitchat"
     # a real question is NOT chitchat
     assert p.plan("What is the notice period for terminating the NDA?")["intent"] != "chitchat"

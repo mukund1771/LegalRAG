@@ -34,7 +34,8 @@ _DRAFTING_RE = re.compile(
     r"(nda|agreement|contract|clause|policy|better)", re.IGNORECASE)
 _GREETINGS = {"hi", "hello", "hey", "yo", "hiya", "sup", "howdy", "hola", "namaste",
               "greetings", "thanks", "thank", "thx", "ty", "tysm", "bye", "goodbye",
-              "cheers", "gm"}
+              "cheers", "gm", "ok", "okay", "cool", "nice", "great", "awesome", "yes",
+              "no", "hii"}
 _META_RE = re.compile(
     r"\b(what can you do|what can i ask|who are you|what are you|"
     r"how do(es)? (you|this) work|what is this(?: app| tool)?$|what do you do)\b",
@@ -73,9 +74,11 @@ class Planner:
 
         # 0) greetings / meta ("hi there", "what can you do") -> friendly chitchat
         _toks = q.replace("!", " ").replace(".", " ").replace("?", " ").split()
-        _is_greeting = bool(_toks) and _toks[0] in _GREETINGS and len(_toks) <= 4
+        # collapse trailing repeats so elongated greetings match: hiiiii->hi, heyyy->hey
+        _tok0 = re.sub(r"(.)\1+$", r"\1", _toks[0]) if _toks else ""
+        _is_greeting = bool(_toks) and _tok0 in _GREETINGS and len(_toks) <= 4
         _is_greeting = _is_greeting or (
-            len(_toks) >= 2 and _toks[0] == "good"
+            len(_toks) >= 2 and _tok0 == "good"
             and _toks[1] in {"morning", "afternoon", "evening"})
         if _is_greeting or (len(_toks) <= 6 and _META_RE.search(q)):
             return {"intent": "chitchat", "in_scope": True, "sub_queries": [],
