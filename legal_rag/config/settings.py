@@ -17,8 +17,11 @@ class LLMSettings(BaseModel):
 
 
 class EmbeddingSettings(BaseModel):
-    model: str = "BAAI/bge-m3"          # local default; swap to legal-tuned in prod
+    # backend: ollama (local runtime) | sentence_transformers | fake (tests/offline)
+    backend: str = "ollama"
+    model: str = "bge-m3"               # local default; swap to legal-tuned in prod
     dim: int = 1024
+    fake_dim: int = 256                 # dimension used by the FakeEmbedder in tests
 
 
 class RetrievalSettings(BaseModel):

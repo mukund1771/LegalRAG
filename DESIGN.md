@@ -322,7 +322,7 @@ Clean separation of concern, typed config, docstrings, an `LLMClient` seam for p
 ## 8. Known Limitations
 
 - No licensed-attorney validation; output is decision-support, **not legal advice** (enforced disclaimer).
-- Quality is bounded by parser accuracy on messy/scanned PDFs (OCR + layout errors propagate). Scanned contracts need an OCR pre-stage.
+- **Scope assumption (v1): digital-text contracts only.** Scanned / image-only documents are out of scope — there is no OCR stage. Quality is bounded by text-extraction/layout accuracy on the provided digital-text PDFs/DOCX. (OCR is a clean add-on at the parser seam if needed later.)
 - Risk taxonomy is curated and finite; novel risk patterns outside it won't be flagged.
 - Cross-document reasoning depends on correct `clause_type` tagging at ingestion; mis-tagging hides conflicts.
 - Evaluation is directional on this corpus size (see §5).

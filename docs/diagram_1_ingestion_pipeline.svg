@@ -27,8 +27,8 @@
 
   <!-- 2 Parse -->
   <rect x="248" y="90" width="170" height="92" rx="12" class="stage"/>
-  <text x="333" y="118" text-anchor="middle" class="h">Parse &amp; OCR</text>
-  <text x="333" y="140" text-anchor="middle" class="s">layout-aware text</text>
+  <text x="333" y="118" text-anchor="middle" class="h">Parse</text>
+  <text x="333" y="140" text-anchor="middle" class="s">digital-text PDF/DOCX</text>
   <text x="333" y="158" text-anchor="middle" class="s">detect sections /</text>
   <text x="333" y="173" text-anchor="middle" class="s">numbered clauses</text>
 

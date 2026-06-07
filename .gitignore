@@ -216,3 +216,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# LegalRAG build artifacts
+data/index/
+.venv/
