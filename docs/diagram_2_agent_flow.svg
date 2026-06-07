@@ -1,0 +1,137 @@
+<svg viewBox="0 0 1200 900" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" role="img" aria-labelledby="t2 d2">
+  <title id="t2">Retrieval and agent interaction flow</title>
+  <desc id="d2">A user query flows through the Orchestrator, Planner/Router, Retriever, a pre-generation Verifier with a corrective re-retrieval loop, the Synthesizer and Risk Assessor, and a post-generation faithfulness Verifier, before the console output is assembled. Out-of-scope queries are diverted to a safe refusal and insufficient evidence triggers abstention.</desc>
+
+  <style>
+    .agent{fill:#EEEDFE;stroke:#534AB7;stroke-width:1.6;}
+    .ctrl{fill:#E6F1FB;stroke:#378ADD;stroke-width:1.6;}
+    .off{fill:#FAECE7;stroke:#D85A30;stroke-width:1.6;}
+    .out{fill:#E1F5EE;stroke:#1D9E75;stroke-width:1.6;}
+    .h{font-size:16px;font-weight:700;fill:#26215C;}
+    .hc{font-size:16px;font-weight:700;fill:#1d4e7a;}
+    .ho{font-size:15px;font-weight:700;fill:#993C1D;}
+    .hg{font-size:16px;font-weight:700;fill:#0F6E56;}
+    .s{font-size:12.5px;fill:#444441;}
+    .so{font-size:12px;fill:#712B13;}
+    .tag{font-size:11.5px;font-weight:700;fill:#534AB7;}
+    .loop{font-size:11.5px;font-weight:700;fill:#D85A30;}
+    .note{font-size:11.5px;fill:#5F5E5A;}
+    .title{font-size:20px;font-weight:800;fill:#2C2C2A;}
+  </style>
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#534AB7"/></marker>
+    <marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#D85A30"/></marker>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#0F6E56"/></marker>
+  </defs>
+
+  <text x="40" y="42" class="title">Diagram 2 — Retrieval + Multi-Agent Interaction Flow (per user turn)</text>
+
+  <!-- main column center x = 520, width 340 => 350..690 -->
+  <!-- 1 User -->
+  <rect x="390" y="64" width="260" height="48" rx="10" class="ctrl"/>
+  <text x="520" y="93" text-anchor="middle" class="hc">User query (console, multi-turn)</text>
+
+  <!-- 2 Orchestrator -->
+  <rect x="350" y="140" width="340" height="64" rx="12" class="ctrl"/>
+  <text x="520" y="166" text-anchor="middle" class="hc">1 · Orchestrator</text>
+  <text x="520" y="187" text-anchor="middle" class="s">history-aware rewrite → standalone query</text>
+
+  <!-- memory side note left -->
+  <rect x="40" y="140" width="270" height="64" rx="10" fill="#FBFBF9" stroke="#D3D1C7" stroke-width="1.2"/>
+  <text x="60" y="165" class="tag">Conversation memory</text>
+  <text x="60" y="185" class="note">session state · resolved entities · history</text>
+  <line x1="310" y1="172" x2="348" y2="172" stroke="#888780" stroke-width="1.6" stroke-dasharray="4 3"/>
+
+  <!-- 3 Planner -->
+  <rect x="350" y="234" width="340" height="68" rx="12" class="agent"/>
+  <text x="520" y="260" text-anchor="middle" class="h">2 · Planner / Router</text>
+  <text x="520" y="281" text-anchor="middle" class="s">intent + scope check + decompose + filters</text>
+
+  <!-- off-ramp guardrail -->
+  <rect x="760" y="232" width="380" height="72" rx="12" class="off"/>
+  <text x="780" y="258" class="ho">Scope guardrail → Safe refusal</text>
+  <text x="780" y="279" class="so">drafting / legal-strategy asks (Q16, Q17)</text>
+  <text x="780" y="296" class="so">decline + offer in-scope help + disclaimer</text>
+  <line x1="690" y1="268" x2="758" y2="268" stroke="#D85A30" stroke-width="2" marker-end="url(#ao)"/>
+  <text x="700" y="260" class="loop">out of scope</text>
+
+  <!-- 4 Retriever -->
+  <rect x="350" y="338" width="340" height="104" rx="12" class="agent"/>
+  <text x="520" y="362" text-anchor="middle" class="h">3 · Retriever</text>
+  <text x="520" y="385" text-anchor="middle" class="s">hybrid (BM25 + dense) → RRF fusion</text>
+  <text x="520" y="404" text-anchor="middle" class="s">→ cross-encoder rerank → parent expansion</text>
+  <text x="520" y="427" text-anchor="middle" class="note">parallel per sub-query · metadata pre-filtering</text>
+
+  <!-- index side note left -->
+  <rect x="40" y="350" width="270" height="80" rx="10" fill="#E1F5EE" stroke="#1D9E75" stroke-width="1.2"/>
+  <text x="60" y="376" class="hg">Hybrid Index</text>
+  <text x="60" y="397" class="note">BM25 + dense vectors + metadata</text>
+  <text x="60" y="416" class="note">(from ingestion pipeline)</text>
+  <line x1="310" y1="390" x2="348" y2="390" stroke="#0F6E56" stroke-width="1.8" marker-end="url(#ag)"/>
+
+  <!-- 5 Verifier pre-gen -->
+  <rect x="350" y="474" width="340" height="66" rx="12" class="agent"/>
+  <text x="520" y="500" text-anchor="middle" class="h">4 · Verifier — pre-gen (CRAG)</text>
+  <text x="520" y="521" text-anchor="middle" class="s">is retrieved evidence sufficient?</text>
+
+  <!-- corrective loop back to retriever (left curve) -->
+  <path d="M350 507 C 250 507, 250 390, 348 390" fill="none" stroke="#D85A30" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ao)"/>
+  <text x="150" y="455" class="loop">corrective re-retrieval</text>
+  <text x="150" y="471" class="loop">(relax filters / rewrite, ≤N)</text>
+
+  <!-- abstain off ramp right -->
+  <rect x="760" y="476" width="380" height="62" rx="12" class="off"/>
+  <text x="780" y="502" class="ho">Abstain → "Not found in corpus"</text>
+  <text x="780" y="522" class="so">still insufficient after N tries</text>
+  <line x1="690" y1="507" x2="758" y2="507" stroke="#D85A30" stroke-width="2" marker-end="url(#ao)"/>
+
+  <!-- 6 Synthesizer -->
+  <rect x="350" y="576" width="340" height="66" rx="12" class="agent"/>
+  <text x="520" y="602" text-anchor="middle" class="h">5 · Synthesizer</text>
+  <text x="520" y="623" text-anchor="middle" class="s">grounded answer + inline citations (IRAC)</text>
+
+  <!-- Risk parallel box right -->
+  <rect x="760" y="576" width="380" height="66" rx="12" class="agent"/>
+  <text x="780" y="602" class="h">6 · Risk Assessor</text>
+  <text x="780" y="623" class="s">clauses → risk flags (type · severity · cite)</text>
+  <line x1="690" y1="609" x2="758" y2="609" stroke="#534AB7" stroke-width="2" marker-end="url(#a)"/>
+  <text x="700" y="601" class="tag">risk / summary intent</text>
+
+  <!-- 7 Verifier post-gen -->
+  <rect x="350" y="676" width="340" height="66" rx="12" class="agent"/>
+  <text x="520" y="702" text-anchor="middle" class="h">7 · Verifier — post-gen (Self-RAG)</text>
+  <text x="520" y="723" text-anchor="middle" class="s">every claim supported by a citation?</text>
+
+  <!-- loop back to synthesizer -->
+  <path d="M690 709 C 720 709, 720 609, 692 609" fill="none" stroke="#D85A30" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ao)"/>
+  <text x="700" y="675" class="loop">strip / regenerate</text>
+
+  <!-- 8 Console output -->
+  <rect x="350" y="780" width="340" height="72" rx="12" class="out"/>
+  <text x="520" y="808" text-anchor="middle" class="hg">Console output</text>
+  <text x="520" y="831" text-anchor="middle" class="s">Answer | Referenced clauses | Risk flags</text>
+
+  <!-- main downward arrows -->
+  <line x1="520" y1="112" x2="520" y2="138" stroke="#534AB7" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="520" y1="204" x2="520" y2="232" stroke="#534AB7" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="520" y1="302" x2="520" y2="336" stroke="#534AB7" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="520" y1="442" x2="520" y2="472" stroke="#534AB7" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="520" y1="540" x2="520" y2="574" stroke="#534AB7" stroke-width="2" marker-end="url(#a)"/>
+  <text x="528" y="560" class="tag">pass</text>
+  <line x1="520" y1="642" x2="520" y2="674" stroke="#534AB7" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="520" y1="742" x2="520" y2="778" stroke="#534AB7" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- output back to orchestrator (memory update) -->
+  <path d="M690 816 C 980 816, 320 816, 318 172 C 318 172, 320 172, 348 172" fill="none" stroke="#1D9E75" stroke-width="1.6" stroke-dasharray="4 4" marker-end="url(#ag)"/>
+  <text x="935" y="700" class="note" fill="#0F6E56">update memory ↑</text>
+
+  <!-- legend -->
+  <rect x="760" y="690" width="380" height="150" rx="10" fill="#FBFBF9" stroke="#D3D1C7" stroke-width="1.2"/>
+  <text x="780" y="714" class="tag" fill="#2C2C2A">Legend</text>
+  <rect x="780" y="724" width="16" height="12" rx="3" class="ctrl"/><text x="804" y="734" class="note">control / memory</text>
+  <rect x="780" y="744" width="16" height="12" rx="3" class="agent"/><text x="804" y="754" class="note">LLM agent (role + prompt)</text>
+  <rect x="780" y="764" width="16" height="12" rx="3" class="off"/><text x="804" y="774" class="note">off-ramp (refuse / abstain)</text>
+  <rect x="780" y="784" width="16" height="12" rx="3" class="out"/><text x="804" y="794" class="note">user-facing output</text>
+  <line x1="782" y1="812" x2="800" y2="812" stroke="#D85A30" stroke-width="2" stroke-dasharray="5 4"/><text x="806" y="816" class="note">corrective / verification loop</text>
+</svg>

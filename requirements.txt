@@ -1,0 +1,18 @@
+# Core
+pydantic>=2.0
+pyyaml>=6.0
+# LLM + embeddings (local-first)
+ollama>=0.3
+sentence-transformers>=3.0        # BGE-M3 + cross-encoder reranker
+FlagEmbedding>=1.2                 # BGE-M3 dense+sparse
+# Retrieval / store
+rank-bm25>=0.2
+faiss-cpu>=1.8                     # dev store; swap to qdrant-client in prod
+chromadb>=0.5
+# Parsing
+pypdf>=4.0
+python-docx>=1.1
+# Eval
+ragas>=0.1
+# CLI
+rich>=13.0
