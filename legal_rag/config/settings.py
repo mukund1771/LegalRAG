@@ -10,10 +10,13 @@ from pydantic import BaseModel
 
 class LLMSettings(BaseModel):
     provider: str = "ollama"            # ollama | vllm | openai  (provider-agnostic seam)
+    backend: str = "ollama"             # ollama | fake (offline tests/demo)
     reasoning_model: str = "qwen2.5:14b-instruct"
     fast_model: str = "llama3.1:8b-instruct"
     base_url: str = "http://localhost:11434"
     seed: int = 42                      # determinism
+    planner_mode: str = "heuristic"     # heuristic | llm
+    verifier_mode: str = "heuristic"    # heuristic | llm
 
 
 class EmbeddingSettings(BaseModel):
