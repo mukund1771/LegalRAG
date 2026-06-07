@@ -8,20 +8,6 @@ Pipeline per (sub-)query:
         ├── bm25.search  (lexical)   ─┤→ RRF fusion → rerank → top-k children
         │                             ┘
         └── parent expansion → Evidence (citation + parent context)
-
-Design choices realized here:
-- **Hybrid + RRF**: combine exact-term (BM25) and paraphrase (dense) recall, fused by
-  rank so no score normalization is needed.
-- **Metadata pre-filtering**: the planner can constrain by doc_type / clause_type /
-  party, which is how cross-document queries (e.g. governing law per agreement) are
-  served precisely.
-- **Parent-child expansion**: we match the small precise child but return the parent
-  section so the synthesizer reasons with full context.
-- **Multi sub-query**: decomposed queries (cross-doc / multi-part) are retrieved
-  independently and merged, de-duplicated by parent section.
-
-The Retriever does no generation — it only finds and packages evidence, keeping the
-retrieval failure mode (recall / document mismatch) isolated and testable.
 """
 
 from __future__ import annotations
@@ -44,8 +30,6 @@ class Retriever:
         self.reranker = reranker
         self.cfg = settings.retrieval
 
-    # ------------------------------------------------------------------ public
-
     def retrieve(self, queries: str | list[str], filters: dict | None = None,
                  final_k: int | None = None) -> list[Evidence]:
         """Retrieve evidence for one query or a list of sub-queries (merged)."""
@@ -53,7 +37,6 @@ class Retriever:
             queries = [queries]
         final_k = final_k or self.cfg.final_k
 
-        # Gather reranked children across all sub-queries, keep the best score per id.
         best: dict[str, float] = {}
         for q in queries:
             for cid, score in self._retrieve_one(q, filters):
@@ -62,8 +45,6 @@ class Retriever:
 
         ranked_children = sorted(best.items(), key=lambda kv: kv[1], reverse=True)
         return self._expand_to_evidence(ranked_children, final_k)
-
-    # ------------------------------------------------------------------ stages
 
     def _retrieve_one(self, query: str, filters: dict | None) -> list[tuple[str, float]]:
         """Hybrid retrieve + fuse + rerank for a single query."""
@@ -77,9 +58,6 @@ class Retriever:
         if not fused:
             return []
 
-        # Rerank on the clause prefixed with its section heading (passage-with-title):
-        # the heading is a strong, low-noise relevance signal for both the cross-encoder
-        # and the lexical fallback (e.g. "Governing Law", "Uptime Commitment").
         candidates = []
         for cid, _ in fused:
             ch = self.store.get(cid)
@@ -88,7 +66,6 @@ class Retriever:
 
     def _expand_to_evidence(self, ranked_children: list[tuple[str, float]],
                             final_k: int) -> list[Evidence]:
-        """Parent-child expansion + de-dup by parent section, capped at final_k."""
         evidence: list[Evidence] = []
         seen_parents: set[str] = set()
 

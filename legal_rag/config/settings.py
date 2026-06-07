@@ -1,8 +1,3 @@
-"""Typed configuration loaded from config.yaml + environment.
-
-Single source of truth for model names, retrieval k's, temperatures and paths,
-so every component reads from one place (readable configuration management).
-"""
 from __future__ import annotations
 from pathlib import Path
 from pydantic import BaseModel

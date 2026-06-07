@@ -1,18 +1,3 @@
-"""Parent-child chunking with context-augmented embedding text.
-
-For each section we emit:
-- one **parent** chunk (the whole section) — returned to the LLM for context, not
-  searched directly;
-- one **child** chunk per clause — small and precise, this is what gets embedded and
-  BM25-indexed.
-
-Each child's ``embed_text`` is prefixed with a document/section *context cue*
-(Summary-Augmented Chunking / contextual retrieval). This cue — e.g.
-``[NDA between Acme, Vendor | §5 Survival | survival]`` — disambiguates which
-agreement and section the clause belongs to and is the cheapest, highest-leverage
-defense against document-level retrieval mismatch (pulling the right clause from the
-wrong contract), the dominant failure mode in legal RAG.
-"""
 
 from __future__ import annotations
 

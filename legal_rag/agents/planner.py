@@ -50,7 +50,6 @@ class Planner:
                 pass  # fall back to deterministic heuristic
         return self._heuristic(query)
 
-    # ------------------------------------------------------------------ LLM mode
 
     def _llm_plan(self, query: str) -> dict:
         raw = self.llm.complete(PLANNER_SYSTEM, PLANNER.format(question=query),
@@ -62,18 +61,14 @@ class Planner:
         base.update({k: v for k, v in plan.items() if v is not None})
         return base
 
-    # ------------------------------------------------------------------ heuristic
-
     def _heuristic(self, query: str) -> dict:
         q = query.lower()
 
-        # 1) scope guardrail first (queries 16, 17)
         if _DRAFTING_RE.search(q) or "better nda" in q:
             return self._scope_out("out_of_scope_drafting")
         if _ADVICE_RE.search(q):
             return self._scope_out("out_of_scope_advice")
 
-        # 2) intent
         if "summar" in q:
             intent = "summary"
         elif any(w in q for w in ("conflict", "across", "all agreements", "which agreement")):
@@ -111,13 +106,9 @@ class Planner:
             if re.search(pattern, q):
                 filters["doc_type"] = doc_type
                 break
-        # clause_type from the query wording (reuse the ingestion tagger)
         ct = tag_clause("", query)
-        # Only pin clause_type for fact lookups and cross-doc comparison; broader
-        # intents (interpretation/conditional/risk) keep recall via hybrid search.
         if ct != "general" and intent in ("single_fact", "cross_doc_compare"):
             filters["clause_type"] = ct
-        # for cross-doc comparison we want the clause across ALL docs -> drop doc_type
         if intent == "cross_doc_compare":
             filters.pop("doc_type", None)
         return filters

@@ -1,10 +1,3 @@
-"""Ingestion entry point: corpus directory -> parsed -> chunked -> embedded -> index.
-
-``build_index`` is the offline pipeline behind ``python main.py --ingest``. It walks
-the contracts directory, parses and chunks each document, embeds only the *child*
-chunks (parents are stored for context, not searched), writes the index to disk, and
-returns a human-readable report used by the CLI.
-"""
 
 from __future__ import annotations
 

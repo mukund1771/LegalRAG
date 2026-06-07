@@ -1,8 +1,3 @@
-"""Interactive multi-turn console (REPL).
-
-Renders the three things the brief asks for each turn: the final answer, the
-referenced clauses (citations), and — once Milestone 5 lands — risk flags.
-"""
 
 from __future__ import annotations
 

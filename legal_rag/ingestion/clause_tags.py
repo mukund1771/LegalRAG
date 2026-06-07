@@ -1,23 +1,7 @@
-"""Heuristic clause-type and document-type tagging.
-
-Why heuristics (keywords) rather than an LLM classifier at ingestion:
-- The clause taxonomy the sample queries care about (termination, confidentiality,
-  liability, governing_law, data_breach, sla_uptime, subprocessor, indemnification,
-  survival) is small and lexically distinctive in contracts.
-- Keyword tagging is deterministic, fast, free, and dependency-light — ideal for v1.
-- ``clause_type`` is metadata used for retrieval *pre-filtering*, not for the final
-  answer, so a few mis-tags degrade ranking slightly rather than producing wrong
-  answers. An LLM tagger is a clean upgrade later behind the same function signature.
-
-Heading text is weighted more heavily than body text, because section headings in
-contracts are strong, low-noise signals of clause type.
-"""
 
 from __future__ import annotations
 
 import re
-
-# Ordered by priority: the first type whose pattern matches the heading wins.
 # Each value is a list of regex fragments (case-insensitive).
 CLAUSE_PATTERNS: dict[str, list[str]] = {
     "governing_law": [r"governing law", r"govern(s|ed|ing)?\b", r"choice of law", r"jurisdiction"],
@@ -34,7 +18,7 @@ CLAUSE_PATTERNS: dict[str, list[str]] = {
     "fees": [r"fees", r"payment", r"invoice"],
     "security": [r"technical and organizational", r"security measures"],
 }
-
+    
 # Document type by filename hint first, then content keywords.
 DOC_TYPE_FILENAME: dict[str, str] = {
     "nda": "NDA",

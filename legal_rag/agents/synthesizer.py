@@ -1,13 +1,3 @@
-"""Synthesizer agent — grounded answer strictly from retrieved evidence.
-
-Key reliability choices:
-- If there is no evidence, abstain immediately (no LLM call) with a fixed message —
-  in legal QA a confident wrong answer is worse than "I don't know".
-- The LLM writes the prose, but CITATIONS are attached programmatically from the
-  retrieved evidence, so every displayed citation is guaranteed real and verifiable.
-- Low temperature + token cap keep answers reproducible and concise.
-"""
-
 from __future__ import annotations
 
 from legal_rag.agents.prompts.templates import SYNTHESIZER, SYNTH_SYSTEM

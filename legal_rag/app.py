@@ -1,8 +1,3 @@
-"""Application wiring — build the full agent graph from settings.
-
-One place that assembles the index, retriever, LLM, and agents into an Orchestrator.
-Used by the console and the tests, so both exercise the same composition.
-"""
 
 from __future__ import annotations
 

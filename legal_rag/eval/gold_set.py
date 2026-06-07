@@ -1,19 +1,3 @@
-"""Gold evaluation set: the 17 sample queries + adversarial no-answer cases.
-
-Each entry declares what a correct system should do, so the runner can score routing,
-retrieval, grounding, refusal, abstention, and risk-flagging. Labels are intentionally
-lenient where the corpus allows several valid sources (``expected_doc_types`` is a set).
-
-Fields:
-  id, query
-  intent            expected planner intent (routing)
-  in_scope          False for drafting/advice (Q16/Q17)
-  expect_refuse     True if the system should decline (out of scope)
-  expect_abstain    True if the answer is absent from the corpus
-  expected_doc_types  acceptable source documents (retrieval doc-hit)
-  expected_clause     a clause type that should appear in the evidence
-  expected_risks      risk types that should be flagged
-"""
 
 from __future__ import annotations
 

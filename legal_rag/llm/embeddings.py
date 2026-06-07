@@ -1,17 +1,3 @@
-"""Embedding backends behind one ``Embedder`` interface.
-
-Why an interface with multiple backends:
-- **Privacy / local-first:** the real runtime uses Ollama (``bge-m3``) so contract
-  text never leaves the machine.
-- **Portability:** ``SentenceTransformerEmbedder`` runs BGE-M3 in-process if Ollama
-  isn't available.
-- **Testability:** ``FakeEmbedder`` is a deterministic, dependency-light hashing
-  embedder so the whole ingestion pipeline can be unit-tested offline with no model
-  download and no GPU. Determinism also makes tests reproducible.
-
-Swapping to a legal-tuned embedding model (e.g. voyage-law-2) in production is a new
-class implementing the same ``embed`` method — nothing downstream changes.
-"""
 
 from __future__ import annotations
 
