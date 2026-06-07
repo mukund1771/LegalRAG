@@ -1,20 +1,3 @@
-"""Evaluation harness — run the gold set through the system and report metrics.
-
-What we measure and why (legal-RAG specific):
-- routing_accuracy   : did the planner pick the right intent / scope?
-- doc_hit_rate       : is the top evidence from the RIGHT contract? (the #1 legal
-                       failure is the right clause from the wrong agreement)
-- clause_hit_rate    : does the evidence contain the expected clause type?
-- refusal_accuracy   : are out-of-scope requests (Q16/Q17) declined?
-- abstention_accuracy: does the system say "not found" when the answer is absent,
-                       and answer when it is present? (a confident wrong answer is
-                       the worst outcome in legal QA)
-- risk_recall        : fraction of expected risk flags actually raised.
-
-Limitations: tiny corpus / 19 items -> directional, not significant; the offline
-FakeEmbedder understates retrieval; no licensed-attorney ground truth; faithfulness
-!= legal correctness. (See DESIGN.md §5.)
-"""
 
 from __future__ import annotations
 

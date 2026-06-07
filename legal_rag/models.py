@@ -1,22 +1,4 @@
-"""Core data models shared across ingestion and retrieval.
-
-These are deliberately plain dataclasses (no framework coupling) so they are easy
-to serialize to JSON for the on-disk index and easy to assert on in tests.
-
-The chunking strategy is parent-child:
-- A ``Section`` is a top-level numbered section of a contract (the *parent*).
-- A ``Clause`` is a sub-unit within a section (the *child*) that gets embedded and
-  searched. When a section has no sub-clauses, the section body itself is the single
-  child.
-- A ``Chunk`` is the indexed unit. ``is_parent`` distinguishes the large parent
-  (returned to the LLM for context) from the small child (embedded and searched).
-
-Every unit carries character offsets into ``ParsedDoc.full_text`` so that answers can
-cite an exact span — character-level citation is what makes a legal answer verifiable.
-"""
-
 from __future__ import annotations
-
 from dataclasses import dataclass, field, asdict
 from typing import Any
 

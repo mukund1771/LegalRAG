@@ -1,10 +1,5 @@
-"""Versioned prompt templates (kept separate from agent logic).
 
-Every grounded agent shares a spine: role + "not a lawyer", a hard grounding rule,
-mandatory citation, and structured output where a downstream agent consumes it.
-"""
-
-# -------------------------------------------------------------------- Synthesizer
+# Synthesizer
 SYNTH_SYSTEM = (
     "You are a legal contract analysis assistant. You are NOT a lawyer and you do not "
     "give legal advice. You answer ONLY from the provided CONTEXT (retrieved contract "
@@ -21,7 +16,7 @@ QUESTION: {question}
 
 Answer concisely using ONLY the context above. Cite the clause you rely on."""
 
-# -------------------------------------------------------------------- Planner
+# Planner
 PLANNER_SYSTEM = (
     "You route questions about a fixed corpus of legal contracts (NDA, MSA/Vendor, "
     "SLA, DPA). You are NOT a lawyer. Classify the question and produce a retrieval "
@@ -34,7 +29,7 @@ PLANNER = """Question: {question}
 
 Return only the JSON object."""
 
-# -------------------------------------------------------------------- Verifier
+# Verifier
 VERIFIER_POSTGEN_SYSTEM = (
     "You check whether an ANSWER is fully supported by the CONTEXT it cited. Return "
     "STRICT JSON: {\"verdict\": \"pass|abstain\", \"unsupported\": [..]}. A claim is "
@@ -48,7 +43,7 @@ ANSWER: {answer}
 
 Return only the JSON object."""
 
-# -------------------------------------------------------------------- Refusal
+# Refusal
 REFUSAL_DRAFTING = (
     "I analyze the contracts you've provided — I don't draft new agreements or give "
     "legal advice. I can, however, point out weak or risky clauses in your current "

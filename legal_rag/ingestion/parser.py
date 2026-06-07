@@ -1,14 +1,3 @@
-"""Parse raw contracts (digital-text PDF/DOCX/MD/TXT) into a structured ParsedDoc.
-
-Layout-aware: detects top-level numbered sections (the parent units) and splits each
-section body into smaller clause units (the child units), recording exact character
-offsets into a single canonical ``full_text`` so downstream citations are verifiable.
-
-Assumption (v1): contracts are digital text (selectable text layer). Scanned /
-image-only documents are OUT OF SCOPE — no OCR stage. ``pypdf`` / ``python-docx``
-text extraction is sufficient for the provided corpus. OCR could be added here without
-changing any downstream component.
-"""
 
 from __future__ import annotations
 

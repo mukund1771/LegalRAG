@@ -1,21 +1,3 @@
-"""Risk Assessor agent — map retrieved clauses to a structured risk taxonomy.
-
-Risk flagging is a first-class requirement (≈ a third of the sample queries: Q7, Q10–
-Q13, Q15). The output is structured, not prose, so severities are sortable and each
-flag carries a verifiable citation:
-
-    {risk_type, severity, affected_party, rationale, citation}
-
-Detection is deterministic (regex over clause text) by default — reliable, free, and
-testable on this corpus — with an LLM mode as a clean upgrade. The taxonomy is curated
-and finite (a documented limitation); novel risks outside it are not flagged.
-
-Two layers:
-- per-clause detectors run on each piece of evidence;
-- a corpus-level detector compares governing-law clauses ACROSS documents to surface
-  the conflicting-jurisdiction risk (Q9), which no single clause reveals.
-"""
-
 from __future__ import annotations
 
 import re
@@ -40,7 +22,7 @@ def _flag(risk_type: str, severity: str, ev: Evidence, rationale: str,
 
 class RiskAssessor:
     def __init__(self, llm=None, settings=None) -> None:
-        self.llm = llm  # reserved for an LLM detection mode
+        self.llm = llm
 
     def assess(self, evidence: list[Evidence]) -> list[dict]:
         flags: list[dict] = []
@@ -48,7 +30,6 @@ class RiskAssessor:
             flags.extend(self._detect_clause(ev))
         flags.extend(self._detect_governing_law_conflict(evidence))
 
-        # de-duplicate by (risk_type, citation); sort by severity for display
         seen, unique = set(), []
         for f in flags:
             key = (f["risk_type"], f["citation"])
@@ -58,8 +39,6 @@ class RiskAssessor:
         order = {"high": 0, "medium": 1, "low": 2}
         unique.sort(key=lambda f: order.get(f["severity"], 3))
         return unique
-
-    # ----------------------------------------------------------- per-clause
 
     def _detect_clause(self, ev: Evidence) -> list[dict]:
         text = ev.context_text.lower()
@@ -100,11 +79,9 @@ class RiskAssessor:
                              "Agreement auto-renews unless notice of non-renewal is given."))
 
         return out
-
-    # ----------------------------------------------------------- corpus-level
-
+    
     def _detect_governing_law_conflict(self, evidence: list[Evidence]) -> list[dict]:
-        laws: dict[str, str] = {}     # doc_id -> jurisdiction
+        laws: dict[str, str] = {}
         cites: dict[str, str] = {}
         for ev in evidence:
             if ev.clause_type == "governing_law":

@@ -1,12 +1,3 @@
-"""Conversational memory — rolling history + structured session state.
-
-Maintains the entities the conversation is 'about' (last document type, clause type,
-party) so a history-aware rewrite can turn a follow-up like 'Does it survive
-termination?' into a standalone query ('Does it survive termination? (regarding the
-NDA)'), which retrieval needs to work across turns.
-
-Heuristic rewrite by default; an LLM rewrite is a drop-in upgrade at ``contextualize``.
-"""
 
 from __future__ import annotations
 

@@ -1,14 +1,3 @@
-"""Verifier / Critic agent — the anti-hallucination spine.
-
-pre-generation (CRAG-style):  grade whether retrieved evidence is sufficient; the
-orchestrator uses the grade to trigger a corrective re-retrieval or abstain.
-
-post-generation (Self-RAG-style):  check the drafted answer is grounded in the cited
-evidence; an unsupported answer is downgraded to abstention.
-
-Both have a deterministic heuristic mode (default) and an optional LLM mode.
-"""
-
 from __future__ import annotations
 
 import json
@@ -32,13 +21,10 @@ class Verifier:
         self.mode = getattr(settings.llm, "verifier_mode", "heuristic") if settings else "heuristic"
         self.min_groundedness = 0.18
 
-    # ------------------------------------------------------ pre-generation (CRAG)
-
     def grade_retrieval(self, query: str, evidence: list[Evidence]) -> str:
         """Return 'correct' | 'ambiguous' | 'incorrect'."""
         if not evidence:
             return "incorrect"
-        # crude confidence: does the top evidence share content with the query?
         q = _content(query)
         if not q:
             return "correct"
@@ -47,8 +33,6 @@ class Verifier:
         if coverage == 0:
             return "incorrect"   # top evidence shares nothing with the query
         return "correct"
-
-    # ----------------------------------------------------- post-generation (Self-RAG)
 
     def check_faithfulness(self, answer: Answer, evidence: list[Evidence]) -> dict:
         """Return {'verdict': 'pass'|'abstain', 'groundedness': float}."""

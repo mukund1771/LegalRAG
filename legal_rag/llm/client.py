@@ -1,10 +1,3 @@
-"""Provider-agnostic LLM client — one seam over Ollama (and an offline fake).
-
-All agents call ``complete``; switching dev (Ollama) -> prod (vLLM/OpenAI, both
-OpenAI-compatible) is a config change. This module also centralizes the determinism
-and verbosity controls the brief asks for: temperature, fixed seed, JSON mode, and a
-max-token cap, applied per call by each agent.
-"""
 
 from __future__ import annotations
 
