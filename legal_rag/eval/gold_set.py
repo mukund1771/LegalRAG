@@ -1,5 +1,67 @@
-"""Gold evaluation set: the 17 sample queries + adversarial 'no-answer' cases.
+"""Gold evaluation set: the 17 sample queries + adversarial no-answer cases.
 
-Each entry: {query, expected_answer, source_clauses[], expected_risk_flags[]}.
+Each entry declares what a correct system should do, so the runner can score routing,
+retrieval, grounding, refusal, abstention, and risk-flagging. Labels are intentionally
+lenient where the corpus allows several valid sources (``expected_doc_types`` is a set).
+
+Fields:
+  id, query
+  intent            expected planner intent (routing)
+  in_scope          False for drafting/advice (Q16/Q17)
+  expect_refuse     True if the system should decline (out of scope)
+  expect_abstain    True if the answer is absent from the corpus
+  expected_doc_types  acceptable source documents (retrieval doc-hit)
+  expected_clause     a clause type that should appear in the evidence
+  expected_risks      risk types that should be flagged
 """
-GOLD: list[dict] = []  # TODO: populate from the sample query set
+
+from __future__ import annotations
+
+GOLD: list[dict] = [
+    {"id": 1, "query": "What is the notice period for terminating the NDA?",
+     "intent": "single_fact", "expected_doc_types": {"NDA"},
+     "expected_clause": "termination"},
+    {"id": 2, "query": "What is the uptime commitment in the SLA?",
+     "intent": "single_fact", "expected_doc_types": {"SLA"},
+     "expected_clause": "sla_uptime"},
+    {"id": 3, "query": "Which law governs the Vendor Services Agreement?",
+     "intent": "single_fact", "expected_doc_types": {"MSA"},
+     "expected_clause": "governing_law"},
+    {"id": 4, "query": "Do confidentiality obligations survive termination of the NDA?",
+     "intent": "interpretation", "expected_doc_types": {"NDA"}},
+    {"id": 5, "query": "Is liability capped for breach of confidentiality?",
+     "intent": "interpretation", "expected_doc_types": {"MSA"},
+     "expected_risks": {"cap_excludes_confidentiality"}},
+    {"id": 6, "query": "What remedies are available if the SLA uptime is not met?",
+     "intent": "conditional", "expected_doc_types": {"SLA"}},
+    {"id": 7, "query": "Is Vendor XYZ's liability capped for data breaches?",
+     "intent": "risk_analysis", "expected_doc_types": {"MSA", "DPA"},
+     "expected_risks": {"uncapped_liability"}},
+    {"id": 8, "query": "Which agreement governs data breach notification timelines?",
+     "intent": "cross_doc_compare", "expected_doc_types": {"DPA"},
+     "expected_clause": "data_breach"},
+    {"id": 9, "query": "Are there conflicting governing laws across agreements?",
+     "intent": "cross_doc_compare", "expected_risks": {"governing_law_conflict"}},
+    {"id": 10, "query": "Are there any legal risks related to liability exposure?",
+     "intent": "risk_analysis", "expected_risks": {"uncapped_liability"}},
+    {"id": 11, "query": "Identify any clauses that could pose financial risk to Acme Corp.",
+     "intent": "risk_analysis"},
+    {"id": 12, "query": "Is there any unlimited liability in these agreements?",
+     "intent": "risk_analysis", "expected_risks": {"uncapped_liability"}},
+    {"id": 13, "query": "Can Vendor XYZ share Acme's confidential data with subcontractors?",
+     "intent": "interpretation", "expected_doc_types": {"DPA"},
+     "expected_risks": {"subprocessor_data_sharing"}},
+    {"id": 14, "query": "What happens if Vendor delays breach notification beyond 72 hours?",
+     "intent": "conditional", "expected_doc_types": {"DPA"}},
+    {"id": 15, "query": "Summarize all risks for Acme Corp in one paragraph.",
+     "intent": "summary"},
+    {"id": 16, "query": "Can you draft a better NDA for me?",
+     "intent": "out_of_scope_drafting", "in_scope": False, "expect_refuse": True},
+    {"id": 17, "query": "What legal strategy should Acme take against Vendor XYZ?",
+     "intent": "out_of_scope_advice", "in_scope": False, "expect_refuse": True},
+    # ---- adversarial: answers that are NOT in the corpus -> must abstain ----
+    {"id": 18, "query": "What is the office parking policy?",
+     "intent": "single_fact", "expect_abstain": True},
+    {"id": 19, "query": "What is the hardware warranty period?",
+     "intent": "single_fact", "expect_abstain": True},
+]

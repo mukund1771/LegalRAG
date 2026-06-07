@@ -88,8 +88,12 @@ class Planner:
             intent = "single_fact"
 
         filters = self._filters(query, intent)
-        needs_risk = intent in ("risk_analysis", "summary") or (
-            "liabilit" in q and any(w in q for w in ("cap", "unlimited", "breach", "data")))
+        needs_risk = (
+            intent in ("risk_analysis", "summary")
+            or "conflict" in q
+            or any(w in q for w in ("subcontractor", "subprocessor", "unlimited",
+                                    "exposure", "financial risk"))
+            or ("liabilit" in q and any(w in q for w in ("cap", "unlimited", "breach", "data"))))
         sub_queries = [query]
 
         return {
@@ -109,8 +113,9 @@ class Planner:
                 break
         # clause_type from the query wording (reuse the ingestion tagger)
         ct = tag_clause("", query)
-        if ct != "general" and intent in ("single_fact", "interpretation",
-                                          "cross_doc_compare", "conditional"):
+        # Only pin clause_type for fact lookups and cross-doc comparison; broader
+        # intents (interpretation/conditional/risk) keep recall via hybrid search.
+        if ct != "general" and intent in ("single_fact", "cross_doc_compare"):
             filters["clause_type"] = ct
         # for cross-doc comparison we want the clause across ALL docs -> drop doc_type
         if intent == "cross_doc_compare":

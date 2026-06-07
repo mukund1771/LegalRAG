@@ -20,7 +20,7 @@ import re
 # Ordered by priority: the first type whose pattern matches the heading wins.
 # Each value is a list of regex fragments (case-insensitive).
 CLAUSE_PATTERNS: dict[str, list[str]] = {
-    "governing_law": [r"governing law", r"governed by", r"choice of law", r"jurisdiction"],
+    "governing_law": [r"governing law", r"govern(s|ed|ing)?\b", r"choice of law", r"jurisdiction"],
     "data_breach": [r"data breach", r"personal data breach", r"breach notification",
                     r"security incident", r"\b72 hours?\b"],
     "subprocessor": [r"subprocessor", r"sub-processor", r"subcontractor"],
