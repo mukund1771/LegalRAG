@@ -13,12 +13,14 @@ echo "==> pulling models (cached in /root/.ollama if a volume is mounted there)"
 ollama pull "$EMBED_MODEL"
 ollama pull "$LLM_MODEL"
 
-# Build the index once (skip if a persisted index already exists on the volume)
-if [ ! -f "data/index/manifest.json" ]; then
-  echo "==> ingesting corpus"
+# Build the index once; SKIP if a persisted index already exists (e.g. on a mounted
+# volume via LEGALRAG_INDEX_DIR) — so pod restarts never re-embed.
+INDEX_DIR="${LEGALRAG_INDEX_DIR:-data/index}"
+if [ ! -f "$INDEX_DIR/manifest.json" ]; then
+  echo "==> ingesting corpus into $INDEX_DIR"
   python3 main.py --ingest --backend ollama
 else
-  echo "==> reusing existing index at data/index"
+  echo "==> reusing existing index at $INDEX_DIR (no re-ingest)"
 fi
 
 echo "==> warming cross-encoder + starting web app on :8000"

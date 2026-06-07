@@ -76,6 +76,14 @@ Expose port 8000 in the pod settings and open the proxy URL.
 | `LLM_MODEL` | `qwen2.5:14b-instruct` | Ollama LLM tag (entrypoint) |
 | `EMBED_MODEL` | `bge-m3` | Ollama embedding tag (entrypoint) |
 
+## Persisting the index (skip re-ingest on restart)
+
+Set `LEGALRAG_INDEX_DIR` to a path on your **network volume** (e.g.
+`/root/.ollama/legalrag-index`). The entrypoint only ingests when
+`$LEGALRAG_INDEX_DIR/manifest.json` is missing, so once built, **pod restarts reuse
+the index and never re-embed**. `--ingest`, `--serve`, and the web app all read the
+same path via `load_settings()`.
+
 ## Updating the corpus
 
 Add/replace files in `data/contracts/`, then re-ingest and restart:

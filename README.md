@@ -137,13 +137,42 @@ on port 8000. Step-by-step (Docker and no-Docker paths, GPU sizing, model cachin
 ## Adding documents & other jurisdictions
 
 - **New document** — drop it in `data/contracts/`, re-run `--ingest`, restart the app.
-  v1 rebuilds the whole index (idempotent; instant for a small corpus). Incremental
-  ingestion for large corpora is the production path (DESIGN §9).
+  v1 rebuilds the whole index (idempotent; instant for a small corpus). See
+  *Re-ingestion in production* below for the better pattern.
 - **Different jurisdiction (e.g. Indian law)** — retrieval, grounding, and citations are
   jurisdiction-agnostic and work. Clause tagging and the risk taxonomy are
   English-keyword and **finite**, so jurisdiction-specific risks aren't auto-flagged, and
   legal *correctness* isn't guaranteed (the not-a-lawyer disclaimer holds). An unrelated
   doc won't corrupt answers — the verifier abstains when nothing relevant is retrieved.
+
+## Re-ingestion in production (don't full-rebuild every time)
+
+`--ingest` rebuilds the entire index. That's fine for a handful of documents, but you
+shouldn't do it on every restart or every new file in production. The better pattern:
+
+1. **Persist the index on durable storage** so restarts never re-ingest. The index is
+   just `data/index/` (`chunks.jsonl` + `child_vectors.npy` + `manifest.json`). Point
+   `LEGALRAG_INDEX_DIR` at a mounted volume (on RunPod: a **network volume**). The Docker
+   entrypoint already **skips ingestion if `manifest.json` exists** — so a pod restart is
+   instant and never re-embeds.
+2. **Incremental ingestion** (the real fix for many/changing docs): keep a manifest of
+   `{doc_path: content_hash}`. On ingest, only (re)embed documents whose hash changed,
+   drop chunks for deleted docs, and append chunks for new ones. Chunk IDs are
+   deterministic (`doc_id::s{n}::c{i}`), so this is a safe upsert — you re-embed one new
+   contract, not the whole corpus. *(Hook: extend `ingestion/indexer.py`; the
+   `VectorStore` already keys everything by chunk ID.)*
+3. **Trigger it, don't babysit it** — instead of manual `--ingest`:
+   - an **admin `POST /ingest`** endpoint that accepts an uploaded file, ingests just
+     that doc, and hot-swaps it into the live store;
+   - a **watched folder / cron** that runs incremental ingest when files change;
+   - at scale, **event-driven**: an object-storage upload (S3/GCS) fires a queue message
+     → an ingestion worker embeds the doc → upserts into the vector DB.
+4. **Atomic, zero-downtime updates** — write to a new index version and swap it in
+   atomically (blue/green) so queries never see a half-built index. With a real vector DB
+   (Qdrant / pgvector) this is a per-document upsert/delete by ID instead of a file swap.
+
+For v1's tiny corpus, persisting the index (step 1) is all you need; steps 2–4 are the
+production path as the corpus grows.
 
 ## Scaling (4 → 10k+ docs)
 

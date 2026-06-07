@@ -1,4 +1,5 @@
 from __future__ import annotations
+import os
 from pathlib import Path
 from pydantic import BaseModel
 
@@ -42,5 +43,25 @@ class Settings(BaseModel):
 
 
 def load_settings(path: str | None = None) -> Settings:
-    """Load settings from YAML (falling back to defaults). TODO: merge yaml/env."""
-    return Settings()
+    """Build settings from defaults, then apply environment overrides.
+
+    Env vars (so ingest, serve, and the web app all agree — important when the index
+    lives on a mounted volume in production):
+      LEGALRAG_INDEX_DIR   where the index is read/written (e.g. a RunPod volume)
+      LEGALRAG_DATA_DIR    the corpus directory
+      LEGALRAG_BACKEND     ollama | fake   (embeddings + LLM)
+      LEGALRAG_RERANKER    cross_encoder | lexical
+      LEGALRAG_OLLAMA_URL  Ollama base URL (default http://localhost:11434)
+    """
+    s = Settings()
+    if os.getenv("LEGALRAG_INDEX_DIR"):
+        s.index_dir = Path(os.environ["LEGALRAG_INDEX_DIR"])
+    if os.getenv("LEGALRAG_DATA_DIR"):
+        s.data_dir = Path(os.environ["LEGALRAG_DATA_DIR"])
+    if os.getenv("LEGALRAG_BACKEND"):
+        s.llm.backend = s.embedding.backend = os.environ["LEGALRAG_BACKEND"]
+    if os.getenv("LEGALRAG_RERANKER"):
+        s.retrieval.reranker_backend = os.environ["LEGALRAG_RERANKER"]
+    if os.getenv("LEGALRAG_OLLAMA_URL"):
+        s.llm.base_url = os.environ["LEGALRAG_OLLAMA_URL"]
+    return s
