@@ -30,6 +30,7 @@ class RetrievalSettings(BaseModel):
     rrf_k: int = 60                     # RRF constant
     rerank_top_n: int = 32             # finalists into the cross-encoder
     final_k: int = 6                   # passages handed to the synthesizer
+    reranker_backend: str = "cross_encoder"  # cross_encoder | lexical (offline/tests)
     reranker_model: str = "BAAI/bge-reranker-v2-m3"
     max_corrective_loops: int = 2      # CRAG re-retrieval budget
 
