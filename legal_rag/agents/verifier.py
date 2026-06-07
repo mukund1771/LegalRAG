@@ -45,7 +45,7 @@ class Verifier:
         top = _content(evidence[0].child_text + " " + evidence[0].section_heading)
         coverage = len(q & top) / len(q)
         if coverage == 0:
-            return "ambiguous"
+            return "incorrect"   # top evidence shares nothing with the query
         return "correct"
 
     # ----------------------------------------------------- post-generation (Self-RAG)

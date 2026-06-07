@@ -1,17 +1,18 @@
 """Orchestrator — owns the per-turn control flow and conversation memory.
 
-Flow (risk agent arrives in Milestone 5):
+Flow:
 
   contextualize(history) -> plan(intent/scope/filters)
       |--- out of scope ----------------------> safe refusal
       v
-  retrieve(sub_queries, filters)
+  retrieve  (risk/summary intents gather risk-bearing clauses across the corpus)
       |--- verifier.grade == 'incorrect' ----> corrective re-retrieval (relax filters),
       |                                          up to max_corrective_loops, else abstain
       v
   synthesize(grounded answer + citations)
       |--- verifier.faithfulness == 'abstain' -> downgrade to abstention
       v
+  risk assessor (when needed) -> risk flags
   assemble TurnResult, update memory
 """
 
@@ -21,13 +22,19 @@ from legal_rag.agents.prompts.templates import REFUSAL_ADVICE, REFUSAL_DRAFTING
 from legal_rag.agents.synthesizer import ABSTAIN
 from legal_rag.models import Answer, TurnResult
 
+# clause types scanned when a query is risk/summary oriented
+RISK_CLAUSE_TYPES = ["liability", "indemnification", "data_breach",
+                     "subprocessor", "governing_law", "termination"]
+
 
 class Orchestrator:
-    def __init__(self, planner, retriever, synthesizer, verifier, memory, settings) -> None:
+    def __init__(self, planner, retriever, synthesizer, verifier, risk, memory,
+                 settings) -> None:
         self.planner = planner
         self.retriever = retriever
         self.synthesizer = synthesizer
         self.verifier = verifier
+        self.risk = risk
         self.memory = memory
         self.max_loops = settings.retrieval.max_corrective_loops
 
@@ -43,8 +50,12 @@ class Orchestrator:
             self.memory.add_turn(user_input, plan, refusal)
             return TurnResult(answer=ans, plan=plan, refused=True)
 
-        # 2) retrieve (+ CRAG corrective loop)
-        evidence = self._retrieve_with_correction(query, plan)
+        # 2) retrieve — broad for risk/summary, focused otherwise
+        risk_intent = plan["intent"] in ("risk_analysis", "summary")
+        if risk_intent:
+            evidence = self._gather_risk_evidence(query)
+        else:
+            evidence = self._retrieve_with_correction(query, plan)
 
         # 3) abstain if still no evidence
         if not evidence:
@@ -58,8 +69,13 @@ class Orchestrator:
         if faith["verdict"] == "abstain" and not ans.abstained:
             ans = Answer(text=ABSTAIN, citations=[], abstained=True, evidence=evidence)
 
+        # 5) risk flags when the query is risk-bearing
+        flags = []
+        if not ans.abstained and (risk_intent or plan.get("needs_risk_agent")):
+            flags = self.risk.assess(evidence)
+
         self.memory.add_turn(user_input, plan, ans.text)
-        return TurnResult(answer=ans, plan=plan)
+        return TurnResult(answer=ans, plan=plan, risk_flags=flags)
 
     # ------------------------------------------------------------------ internals
 
@@ -76,7 +92,17 @@ class Orchestrator:
             filters = self._relax(filters)        # progressively widen
             evidence = self.retriever.retrieve(sub_queries, filters)
             grade = self.verifier.grade_retrieval(query, evidence)
-        return evidence
+        # unreliable retrieval after correction -> abstain (better than a wrong answer)
+        return [] if grade == "incorrect" else evidence
+
+    def _gather_risk_evidence(self, query: str) -> list:
+        """Collect risk-bearing clauses across the whole corpus (for risk/summary)."""
+        merged: dict[str, object] = {}
+        for clause_type in RISK_CLAUSE_TYPES:
+            for ev in self.retriever.retrieve([query], {"clause_type": clause_type},
+                                              final_k=2):
+                merged.setdefault(ev.chunk_id, ev)
+        return list(merged.values())
 
     @staticmethod
     def _relax(filters: dict) -> dict:

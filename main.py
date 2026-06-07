@@ -82,7 +82,15 @@ def main() -> None:
     elif args.search:
         _run_search(settings, args.search, args.backend, args.reranker, args.k)
     elif args.eval:
-        print("Evaluation harness lands in Milestone 6.")
+        from legal_rag.app import build_system
+        from legal_rag.eval.runner import format_report, run_eval
+        if args.backend:
+            settings.llm.backend = args.backend
+            settings.embedding.backend = args.backend
+        if args.reranker:
+            settings.retrieval.reranker_backend = args.reranker
+        orchestrator = build_system(settings)
+        print(format_report(run_eval(orchestrator)))
     else:
         from legal_rag.cli.console import repl
         if args.backend:

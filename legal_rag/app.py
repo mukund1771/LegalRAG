@@ -9,6 +9,7 @@ from __future__ import annotations
 from legal_rag.agents.orchestrator import Orchestrator
 from legal_rag.agents.planner import Planner
 from legal_rag.agents.retriever import Retriever
+from legal_rag.agents.risk import RiskAssessor
 from legal_rag.agents.synthesizer import Synthesizer
 from legal_rag.agents.verifier import Verifier
 from legal_rag.llm.client import get_llm
@@ -28,6 +29,7 @@ def build_system(settings) -> Orchestrator:
     synthesizer = Synthesizer(llm, settings)
     planner = Planner(llm, settings)
     verifier = Verifier(llm, settings)
+    risk = RiskAssessor(llm, settings)
     memory = SessionMemory()
 
-    return Orchestrator(planner, retriever, synthesizer, verifier, memory, settings)
+    return Orchestrator(planner, retriever, synthesizer, verifier, risk, memory, settings)
