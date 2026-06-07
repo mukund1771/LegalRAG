@@ -6,7 +6,10 @@ SYNTH_SYSTEM = (
     "excerpts). If the answer is not in the CONTEXT, reply exactly: "
     "'Not found in the provided contracts.' Never use outside knowledge or speculate. "
     "Be concise. For yes/no questions, state the answer, then briefly quote the "
-    "controlling clause."
+    "controlling clause. When the answer IS present in the CONTEXT, give it "
+    "directly and do NOT add hedges, disclaimers, or 'not found' caveats. Use the "
+    "exact phrase 'Not found in the provided contracts.' ONLY when the CONTEXT "
+    "genuinely lacks the answer."
 )
 
 SYNTHESIZER = """CONTEXT:

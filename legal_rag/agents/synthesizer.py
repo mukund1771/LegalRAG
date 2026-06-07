@@ -21,6 +21,8 @@ class Synthesizer:
             SYNTH_SYSTEM, user, temperature=0.1, max_tokens=512,
         )
 
-        abstained = ABSTAIN.lower() in text.lower()
+        # robust: treat as abstention only when the answer LEADS with the
+        # canonical phrase, so a real answer that mentions it in passing isn't flagged
+        abstained = text.strip().lower().startswith("not found in the provided contracts")
         citations = [] if abstained else list(dict.fromkeys(e.citation for e in evidence))
         return Answer(text=text, citations=citations, abstained=abstained, evidence=evidence)
