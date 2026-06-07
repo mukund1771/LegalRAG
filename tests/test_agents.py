@@ -160,3 +160,18 @@ def test_verifier_grade_rescues_confident_reranker_score():
     # same clause but zero score (lexical, no overlap) => incorrect
     ev_relevant[0].score = 0.0
     assert v.grade_retrieval("xyzzy floopdoodle quux", ev_relevant) == "incorrect"
+
+
+def test_planner_and_orchestrator_chitchat(settings):
+    from legal_rag.agents.planner import Planner
+    p = Planner(None, load_settings())
+    assert p.plan("hello there")["intent"] == "chitchat"
+    assert p.plan("hi")["intent"] == "chitchat"
+    assert p.plan("what can you do")["intent"] == "chitchat"
+    # a real question is NOT chitchat
+    assert p.plan("What is the notice period for terminating the NDA?")["intent"] != "chitchat"
+
+    orch = build_system(settings)
+    r = orch.handle_turn("hello there")
+    assert not r.refused and not r.answer.abstained
+    assert "contracts" in r.answer.text.lower() and r.answer.citations == []

@@ -59,3 +59,10 @@ REFUSAL_ADVICE = (
     "and flag risks from the contracts you've provided, with citations, so you can "
     "discuss them with counsel. (Not legal advice; consult a qualified attorney.)"
 )
+
+# ------------------------------------------------------------------- Chitchat
+CHITCHAT = (
+    "Hi! I answer questions about the contracts in this corpus — things like notice "
+    "periods, governing law, liability caps, data-breach terms, or risks for a party. "
+    "Ask about a clause and I'll answer with citations. (Decision-support, not legal advice.)"
+)

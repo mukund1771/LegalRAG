@@ -1,5 +1,7 @@
 from __future__ import annotations
-from legal_rag.agents.prompts.templates import REFUSAL_ADVICE, REFUSAL_DRAFTING
+from legal_rag.agents.prompts.templates import (
+    CHITCHAT, REFUSAL_ADVICE, REFUSAL_DRAFTING,
+)
 from legal_rag.agents.synthesizer import ABSTAIN
 from legal_rag.models import Answer, TurnResult
 
@@ -21,6 +23,12 @@ class Orchestrator:
     def handle_turn(self, user_input: str) -> TurnResult:
         query = self.memory.contextualize(user_input)
         plan = self.planner.plan(query)
+
+        # 0) greetings / meta -> friendly capability message (no retrieval)
+        if plan.get("intent") == "chitchat":
+            ans = Answer(text=CHITCHAT, citations=[], abstained=False)
+            self.memory.add_turn(user_input, plan, ans.text)
+            return TurnResult(answer=ans, plan=plan)
 
         if not plan.get("in_scope", True):
             refusal = (REFUSAL_DRAFTING if plan["intent"] == "out_of_scope_drafting"

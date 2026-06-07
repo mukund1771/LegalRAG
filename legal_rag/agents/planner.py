@@ -32,6 +32,13 @@ _DOC_TYPE_HINTS = [
 _DRAFTING_RE = re.compile(
     r"\b(draft|write|create|generate|compose|rewrite|redraft)\b.*"
     r"(nda|agreement|contract|clause|policy|better)", re.IGNORECASE)
+_GREETINGS = {"hi", "hello", "hey", "yo", "hiya", "sup", "howdy", "hola", "namaste",
+              "greetings", "thanks", "thank", "thx", "ty", "tysm", "bye", "goodbye",
+              "cheers", "gm"}
+_META_RE = re.compile(
+    r"\b(what can you do|what can i ask|who are you|what are you|"
+    r"how do(es)? (you|this) work|what is this(?: app| tool)?$|what do you do)\b",
+    re.IGNORECASE)
 _ADVICE_RE = re.compile(
     r"\b(legal strategy|strategy should|should .*(take|sue|do)|advise|recommend|"
     r"what should .* do)\b", re.IGNORECASE)
@@ -63,6 +70,16 @@ class Planner:
 
     def _heuristic(self, query: str) -> dict:
         q = query.lower()
+
+        # 0) greetings / meta ("hi there", "what can you do") -> friendly chitchat
+        _toks = q.replace("!", " ").replace(".", " ").replace("?", " ").split()
+        _is_greeting = bool(_toks) and _toks[0] in _GREETINGS and len(_toks) <= 4
+        _is_greeting = _is_greeting or (
+            len(_toks) >= 2 and _toks[0] == "good"
+            and _toks[1] in {"morning", "afternoon", "evening"})
+        if _is_greeting or (len(_toks) <= 6 and _META_RE.search(q)):
+            return {"intent": "chitchat", "in_scope": True, "sub_queries": [],
+                    "filters": {}, "needs_risk_agent": False}
 
         if _DRAFTING_RE.search(q) or "better nda" in q:
             return self._scope_out("out_of_scope_drafting")
