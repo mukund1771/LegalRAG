@@ -131,5 +131,5 @@ and human-in-the-loop review for high-severity risk flags.
 ## Known limitations
 
 No licensed-attorney validation — output is decision-support, **not legal advice**.
-Quality is bounded by parser/OCR accuracy on messy PDFs. The risk taxonomy is finite.
+Quality is bounded by text-extraction accuracy on **digital-text** PDFs (scanned/image-only docs and OCR are out of scope for v1). The risk taxonomy is finite.
 Evaluation is directional on a tiny corpus. See DESIGN.md §8.

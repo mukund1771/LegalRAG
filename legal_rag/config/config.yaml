@@ -1,12 +1,11 @@
-# Human-readable configuration. Override defaults in legal_rag/config/settings.py
 llm:
-  provider: ollama          # ollama (dev) | vllm (prod) | openai
+  provider: ollama          
   reasoning_model: qwen2.5:14b-instruct
   fast_model: llama3.1:8b-instruct
   base_url: http://localhost:11434
   seed: 42
 embedding:
-  model: BAAI/bge-m3        # prod: voyage-law-2 / fine-tuned legal model
+  model: BAAI/bge-m3        
 retrieval:
   bm25_top_k: 50
   dense_top_k: 50

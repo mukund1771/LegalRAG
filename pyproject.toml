@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "legal-rag"
+version = "0.1.0"
+description = "Multi-agent RAG for legal contract analysis"
+requires-python = ">=3.10"
+
+[tool.setuptools.packages.find]
+include = ["legal_rag*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
