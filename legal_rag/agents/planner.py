@@ -88,7 +88,9 @@ class Planner:
 
         if "summar" in q:
             intent = "summary"
-        elif any(w in q for w in ("conflict", "across", "all agreements", "which agreement")):
+        elif any(w in q for w in ("conflict", "across", "all agreements", "all contracts",
+                                  "which agreement", "governing laws", "in the contracts",
+                                  "these agreements", "these contracts")):
             intent = "cross_doc_compare"
         elif (any(w in q for w in ("risk", "unlimited", "financial", "exposure"))
               or ("liabilit" in q and ("data breach" in q or "data breaches" in q))):

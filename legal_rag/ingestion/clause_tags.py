@@ -12,7 +12,7 @@ CLAUSE_PATTERNS: dict[str, list[str]] = {
                    r"\b99\.\d+%"],
     "confidentiality": [r"confidential", r"non-disclosure", r"nondisclosure"],
     "survival": [r"survival", r"shall survive", r"survive the termination"],
-    "termination": [r"termination", r"terminate", r"term and termination", r"non-renewal"],
+    "termination": [r"terminat", r"notice period", r"\bnotice\b", r"resign", r"non-renewal"],
     "indemnification": [r"indemnif"],
     "liability": [r"limitation of liability", r"liability", r"liable", r"\bcap\b"],
     "fees": [r"fees", r"payment", r"invoice"],

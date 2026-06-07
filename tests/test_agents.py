@@ -175,3 +175,18 @@ def test_planner_and_orchestrator_chitchat(settings):
     r = orch.handle_turn("hello there")
     assert not r.refused and not r.answer.abstained
     assert "contracts" in r.answer.text.lower() and r.answer.citations == []
+
+
+def test_planner_compound_governing_laws_is_cross_doc():
+    """Plural 'governing laws ... in the contracts' -> cross-doc (not pinned to one doc)."""
+    p = Planner(None, load_settings())
+    plan = p.plan("what are the governing laws which are there in the contracts")
+    assert plan["intent"] == "cross_doc_compare"
+    assert plan["filters"].get("clause_type") == "governing_law"
+    assert "doc_type" not in plan["filters"]
+
+
+def test_clause_tags_notice_period_is_termination():
+    from legal_rag.ingestion.clause_tags import tag_clause
+    assert tag_clause("", "what about my notice period, can I resign in 5 days") == "termination"
+    assert tag_clause("", "the notice period for terminating") == "termination"
