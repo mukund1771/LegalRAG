@@ -84,7 +84,13 @@ def main() -> None:
     elif args.eval:
         print("Evaluation harness lands in Milestone 6.")
     else:
-        print("Interactive console lands in Milestone 3. Run with --ingest / --search for now.")
+        from legal_rag.cli.console import repl
+        if args.backend:
+            settings.llm.backend = args.backend
+            settings.embedding.backend = args.backend
+        if args.reranker:
+            settings.retrieval.reranker_backend = args.reranker
+        repl(settings)
 
 
 if __name__ == "__main__":

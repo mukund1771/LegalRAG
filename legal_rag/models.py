@@ -131,3 +131,29 @@ class Evidence:
 
     def to_json(self) -> dict[str, Any]:
         return asdict(self)
+
+
+@dataclass
+class Answer:
+    """The synthesized response shown to the user.
+
+    Citations are attached *programmatically* from the retrieved evidence (not parsed
+    out of the LLM text), which guarantees every displayed citation is real and
+    verifiable. ``abstained`` is True when the system declined to answer for lack of
+    grounded evidence.
+    """
+
+    text: str
+    citations: list[str] = field(default_factory=list)
+    abstained: bool = False
+    evidence: list[Evidence] = field(default_factory=list)
+
+
+@dataclass
+class TurnResult:
+    """Everything the orchestrator produced for one conversational turn."""
+
+    answer: Answer
+    plan: dict
+    refused: bool = False
+    risk_flags: list[dict] = field(default_factory=list)
