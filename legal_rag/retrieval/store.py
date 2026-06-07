@@ -71,6 +71,45 @@ class VectorStore:
         corpus = [_tokenize(self.get(cid).embed_text) for cid in self.child_ids]
         self._bm25 = BM25Okapi(corpus) if corpus else None
 
+    def ensure_bm25(self):
+        """Return the BM25 index, building it lazily if needed."""
+        if self._bm25 is None:
+            self.build_bm25()
+        return self._bm25
+
+    # ---------------------------------------------------------------- filtering
+
+    @staticmethod
+    def matches_filters(chunk: Chunk, filters: dict | None) -> bool:
+        """True if a chunk satisfies metadata filters (doc_type/clause_type/doc_id/party).
+
+        Filters are AND-ed. ``party`` matches if any party name contains the value
+        (case-insensitive). Empty / falsy filter values are ignored, so a planner can
+        emit partial filters without over-constraining retrieval.
+        """
+        if not filters:
+            return True
+        m = chunk.metadata
+        for key, val in filters.items():
+            if not val:
+                continue
+            if key == "doc_type" and m.doc_type.lower() != str(val).lower():
+                return False
+            if key == "clause_type" and m.clause_type.lower() != str(val).lower():
+                return False
+            if key == "doc_id" and m.doc_id.lower() != str(val).lower():
+                return False
+            if key == "party" and not any(str(val).lower() in p.lower() for p in m.parties):
+                return False
+        return True
+
+    def child_index_filter(self, filters: dict | None) -> list[int]:
+        """Indices (into child_ids/child_vectors) of children passing the filters."""
+        return [
+            i for i, cid in enumerate(self.child_ids)
+            if self.matches_filters(self.get(cid), filters)
+        ]
+
     # ---------------------------------------------------------------- accessors
 
     def get(self, chunk_id: str) -> Chunk:

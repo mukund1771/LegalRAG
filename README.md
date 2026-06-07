@@ -58,8 +58,13 @@ cp your_contracts/*.pdf data/contracts/
 
 ```bash
 python main.py --ingest    # build the hybrid index from data/contracts
+python main.py --search "What is the notice period for terminating the NDA?"  # retrieve evidence
 python main.py             # start the interactive console
 python main.py --eval      # run the evaluation harness
+
+# fully offline (no Ollama / model download), e.g. for tests or a quick demo:
+python main.py --ingest --backend fake
+python main.py --search "uptime commitment in the SLA?" --backend fake --reranker lexical
 ```
 
 ## Project structure

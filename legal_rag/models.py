@@ -105,3 +105,29 @@ class Chunk:
             embed_text=d["embed_text"],
             metadata=meta,
         )
+
+
+@dataclass
+class Evidence:
+    """A retrieved piece of evidence handed to the synthesizer/risk agents.
+
+    The match happens on the small ``child`` chunk, but ``context_text`` is the larger
+    parent section (parent-child expansion) so the LLM reasons with full context. The
+    ``citation`` is a human-readable, verifiable reference to the source span.
+    """
+
+    chunk_id: str            # the matched child chunk id
+    doc_id: str
+    doc_type: str
+    section_no: str
+    section_heading: str
+    clause_type: str
+    child_text: str          # the precise matched clause
+    context_text: str        # the parent section (what the LLM reads)
+    citation: str            # e.g. "[NDA_Acme_VendorXYZ §4 Term and Termination]"
+    char_start: int
+    char_end: int
+    score: float
+
+    def to_json(self) -> dict[str, Any]:
+        return asdict(self)
